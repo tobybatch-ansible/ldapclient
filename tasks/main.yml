@@ -1,0 +1,92 @@
+---
+- name: Install LDAP PAM module
+  apt: name={{ item }} state=present
+  with_items:
+    - libpam-ldap
+    - nscd
+
+- lineinfile:
+    dest:   /etc/ldap.conf
+    regexp: '^base'
+    line:   "base {{ ldap.dc }}"
+    owner:  root
+    group:  root
+    mode:   0644
+- lineinfile:
+    dest:   /etc/ldap.conf
+    regexp: '^uri'
+    line:   'uri ldap://{{ ldap.server }}'
+    owner:  root
+    group:  root
+    mode:   0644
+- lineinfile:
+    dest:   /etc/ldap.conf
+    regexp: '^ldap_version'
+    line:   'ldap_version 3'
+    owner:  root
+    group:  root
+    mode:   0644
+- lineinfile:
+    dest:   /etc/ldap.conf
+    regexp: '^rootbinddn'
+    line:   'rootbinddn cn=admin,{{ ldap.dc }}'
+    owner:  root
+    group:  root
+    mode:   0644
+- lineinfile:
+    dest:   /etc/ldap.conf
+    regexp: '^bind_policy'
+    line:   'bind_policy soft'
+    owner:  root
+    group:  root
+    mode:   0644
+- lineinfile:
+    dest:   /etc/ldap.conf
+    regexp: '^pam_password'
+    line:   'pam_password md5'
+    owner:  root
+    group:  root
+    mode:   0644
+
+- file: path=/etc/ldap.secret state=absent owner=root group=root mode=0400
+- file: path=/etc/ldap.secret state=touch owner=root group=root mode=0400
+- lineinfile:
+    dest:   /etc/ldap.secret
+    insertbefore: BOF
+    line:   "{{ ldap.pass | default(ldap_pass) }}"
+    owner:  root
+    group:  root
+    mode:   0600
+
+- lineinfile:
+    dest:   /etc/ldap.conf
+    regexp: "^#bind_policy hard"
+    line:   "bind_policy soft"
+    owner:  root
+    group:  root
+    mode:   0644
+
+- copy:
+    src: common-password
+    dest: /etc/pam.d/common-password
+    owner:  root
+    group:  root
+    mode:   0644
+
+- copy:
+    src: common-session
+    dest: /etc/pam.d/common-session
+    owner:  root
+    group:  root
+    mode:   0644
+
+- copy:
+    src: nsswitch.conf
+    dest: /etc/nsswitch.conf
+    owner:  root
+    group:  root
+    mode:   0644
+
+
+- command: touch /etc/ldap/.done creates=/etc/ldap/.done
+  notify: restart nscd
