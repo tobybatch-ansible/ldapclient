@@ -4,18 +4,19 @@
   with_items:
     - libpam-ldap
     - nscd
+    - autofs
 
 - lineinfile:
     dest:   /etc/ldap.conf
     regexp: '^base'
-    line:   "base {{ ldap.dc }}"
+    line:   "base {{ ldap_dc }}"
     owner:  root
     group:  root
     mode:   0644
 - lineinfile:
     dest:   /etc/ldap.conf
     regexp: '^uri'
-    line:   'uri ldap://{{ ldap.server }}'
+    line:   'uri ldap://{{ ldap_server }}'
     owner:  root
     group:  root
     mode:   0644
@@ -29,7 +30,7 @@
 - lineinfile:
     dest:   /etc/ldap.conf
     regexp: '^rootbinddn'
-    line:   'rootbinddn cn=admin,{{ ldap.dc }}'
+    line:   'rootbinddn cn=admin,{{ ldap_dc }}'
     owner:  root
     group:  root
     mode:   0644
@@ -87,6 +88,20 @@
     group:  root
     mode:   0644
 
-
 - command: touch /etc/ldap/.done creates=/etc/ldap/.done
   notify: restart nscd
+
+- lineinfile:
+    dest:   /etc/auto.master
+    regexp: "^#/net -hosts"
+    line:   "/net  -hosts"
+    owner:  root
+    group:  root
+    mode:   0644
+
+- file:
+    src:  /net/{{ ldap_net_home }}/home
+    dest: /home/users
+    owner: root
+    group: root
+    state: link

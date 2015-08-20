@@ -1,0 +1,4 @@
+ldap_net_home: 192.168.21.250
+ldap_dc: 
+ldap_server: 
+ldap_pass: password
